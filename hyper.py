@@ -20,7 +20,7 @@ class Hyper:
         self.k = k
 
         self.model = dy.Model()
-        self.trainer = dy.SimpleSGDTrainer(self.model)
+        self.trainer = dy.AdamTrainer(self.model)
 
         self.word_embeddings = self.model.add_lookup_parameters((len(self.w2i), self.embeds_dim))
         for i, w in enumerate(self.words):
@@ -93,19 +93,14 @@ class Hyper:
             dy.renew_cg()
         print(f'loss: {loss_all/total_all:.4f}')
 
-    def get_hypers(self, query, vocab, w2i):
-        ans = list()
+    def get_hypers(self, query, vocab, ehs, w2i):
+        print (query)
         eq = dy.average([self.word_embeddings[w2i[w]] if w in self.w2i else self.word_embeddings[0] for w in query])
         Ps = []
         for i in range(self.k):
             Ps.append(self.Phis[i].expr() * eq)
         P = dy.transpose(dy.concatenate_cols(Ps))
-        for ws in vocab:
-            eh = dy.average([self.word_embeddings[self.w2i[w]] if w in self.w2i else self.word_embeddings[0] for w in ws])
-            s = P * eh
-            y = dy.reshape(dy.logistic(self.W.expr() * s + self.b.expr()), (1,))
-            if len(ans) <=15 and y.npvalue() > 0.5:
-                ans.append(ws)
-            if len(ans)>15:
-                break
+        s = P * ehs
+        y = dy.logistic(self.W.expr() * s + self.b.expr())
+        ans = [vocab[i] for i in y.npvalue().reshape(-1).argsort()[-15:]]
         return ans
