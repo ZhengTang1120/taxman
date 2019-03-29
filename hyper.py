@@ -94,7 +94,6 @@ class Hyper:
         print(f'loss: {loss_all/total_all:.4f}')
 
     def get_hypers(self, query, vocab, ehs, w2i):
-        print (query)
         eq = dy.average([self.word_embeddings[w2i[w]] if w in self.w2i else self.word_embeddings[0] for w in query])
         Ps = []
         for i in range(self.k):
@@ -102,5 +101,8 @@ class Hyper:
         P = dy.transpose(dy.concatenate_cols(Ps))
         s = P * ehs
         y = dy.logistic(self.W.expr() * s + self.b.expr())
-        ans = [vocab[i] for i in y.npvalue().reshape(-1).argsort()[-15:]]
+        ans = []
+        for i in y.npvalue().reshape(-1).argsort()[-15:]:
+            if y.npvalue().reshape(-1)[i] > 0.5:
+                ans.append(vocab[i])
         return ans

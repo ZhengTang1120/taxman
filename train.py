@@ -91,21 +91,23 @@ if __name__ == '__main__':
     for i in range(200):
         random.shuffle(trainning_set)
         model.train(trainning_set)
-        if ((i) % 10) == 0:
+        if ((i+1) % 10) == 0:
             ehs = list()
             for ws in candidates:
                 eh = dy.average([model.word_embeddings[model.w2i[w]] if w in model.w2i else model.word_embeddings[0] for w in ws])
                 ehs.append(eh)
             ehs = dy.concatenate_cols(ehs)
-            with open("result"+str(i)+".txt", "w") as f:
+            with open("result"+str(i+1)+".txt", "w") as f:
                 for line in open("SemEval2018-Task9/test/data/1A.english.test.data.txt"):
                     query = line.strip().lower().split("\t")[0]
-                    f.write(query)
                     query = query.split(" ")
-                    for c in model.get_hypers(query, candidates, ehs, w2i):
+                    for i, c in enumerate(model.get_hypers(query, candidates, ehs, w2i)):
                         c = ' '.join(c)
-                        f.write("\t"+c)
+                        if i == 0:
+                            f.write(c)
+                        else:
+                            f.write("\t"+c)
                     f.write("\n")
-            model.save("model"+str(i))
+            model.save("model"+str(i+1))
 
 
